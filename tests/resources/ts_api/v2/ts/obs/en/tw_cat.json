@@ -1,0 +1,76 @@
+{
+  "chapters": [
+    {
+      "frames": [
+        {
+          "id": "01",
+          "items": [
+            {
+              "id": "god"
+            },
+            {
+              "id": "holyspirit"
+            }
+          ]
+        },
+        {
+          "id": "02",
+          "items": [
+            {
+              "id": "god"
+            },
+            {
+              "id": "good"
+            }
+          ]
+        }
+      ],
+      "id": "01"
+    },
+    {
+      "frames": [
+        {
+          "id": "01",
+          "items": [
+            {
+              "id": "adam"
+            },
+            {
+              "id": "god"
+            },
+            {
+              "id": "sin"
+            }
+          ]
+        },
+        {
+          "id": "02",
+          "items": [
+            {
+              "id": "god"
+            }
+          ]
+        },
+        {
+          "id": "03",
+          "items": [
+            {
+              "id": "god"
+            },
+            {
+              "id": "good"
+            },
+            {
+              "id": "evil"
+            },
+            {
+              "id": "death"
+            }
+          ]
+        }
+      ],
+      "id": "02"
+    }
+  ],
+  "date_modified": "20170103"
+}
