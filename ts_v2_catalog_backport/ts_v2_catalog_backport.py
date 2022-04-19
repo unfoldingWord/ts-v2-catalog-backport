@@ -198,8 +198,6 @@ class TsV2CatalogBackporter():
         # walk v3 catalog
         for lang in self.latest_catalog['languages']:
             lid = self.sanitize_identifier(lang['identifier'], lower=False)
-            if lid != "en":
-                continue
             self.logger.info('Inspecting {}'.format(lid))
             for res in lang['resources']:
                 rid = self.sanitize_identifier(res['identifier'])
