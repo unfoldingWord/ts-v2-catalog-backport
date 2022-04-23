@@ -147,10 +147,11 @@ class TsV2CatalogBackporter():
             self.reporter.commit()
 
     def __del__(self):
-        try:
-            shutil.rmtree(self.temp_dir)
-        finally:
-            pass
+        if self.temp_dir and os.path.exists(self.temp_dir):
+            try:
+                shutil.rmtree(self.temp_dir)
+            finally:
+                pass
 
     def _run(self):
         """
