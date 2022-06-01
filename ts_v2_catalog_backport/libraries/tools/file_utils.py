@@ -229,7 +229,7 @@ def copy_tree(src, dst, symlinks=False, ignore=None):
 
 
 def remove_tree(dir_path, ignore_errors=True):
-    if os.path.isdir(dir_path):
+    if dir_path and os.path.isdir(dir_path):
         shutil.rmtree(dir_path, ignore_errors=ignore_errors)
 
 
@@ -270,7 +270,6 @@ def download_rc(lid, rid, url, temp_dir=None, downloader=None):
     unzip(zip_file, zip_dir)
     remove(zip_file, True)
     rc_dir = os.path.join(zip_dir, os.listdir(zip_dir)[0])
-    print(("RCCCC:", rc_dir))
 
     try:
         manifest = yaml.safe_load(read_file(os.path.join(rc_dir, 'manifest.yaml')))
