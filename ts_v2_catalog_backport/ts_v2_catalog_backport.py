@@ -447,7 +447,6 @@ class TsV2CatalogBackporter():
         cache_key = '{0}--{1}'.format(pid, lid)
         if cache_key in self.ts_resource_cache:
             ts_resources = self.ts_resource_cache[cache_key]
-            self.logger.debug(ts_resources)
             self.logger.debug(f"{cache_key} found in cache!")
         else:
             ts_resource_url = '{}/v2/ts/{}/{}/resources.json'.format(self.cdn_url, pid, lid)

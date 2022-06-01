@@ -67,13 +67,6 @@ class DynamoDBHandler(object):
                 expressions.append('{0} = :{1}'.format(name, field))
                 values[':{0}'.format(field)] = value
 
-        self.logger.debug('UPDATING WITH:')
-        self.logger.debug('SET {0}'.format(', '.join(expressions)))
-        self.logger.debug("VALUES:")
-        self.logger.debug(values)
-        self.logger.debug("NAMES:")
-        self.logger.debug(names)
-
         if names:
             return self.table.update_item(
                 Key=keys,
