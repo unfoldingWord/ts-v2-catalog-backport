@@ -22,7 +22,7 @@ import csv
 from datetime import timedelta
 
 from .d43_aws_tools import S3Handler, DynamoDBHandler
-from .libraries.tools.file_utils import read_file, download_rc, remove, get_subdirs, remove_tree
+from .libraries.tools.file_utils import read_file, download_rc, remove, remove_tree
 from .libraries.tools.legacy_utils import index_obs
 from .libraries.tools.url_utils import download_file, get_url, url_exists
 from .libraries.tools.ts_v2_utils import convert_rc_links, make_legacy_date, \
@@ -35,7 +35,7 @@ class TsV2CatalogBackporter():
     api_version = 'ts.2'
 
     def __init__(self, prefix='', cdn_bucket=None, cdn_url=None, log_level=None, 
-            to_email='alerts@unfoldingword.org', from_email='alerts@unfoldingword.org', boto_logging_level=logging.ERROR):
+            to_email='alerts@unfoldingword.org', from_email='alerts@unfoldingword.org', boto_logging_level=logging.ERROR, debug=True):
         # Setup logging
         self.logger = logging.getLogger('ts-v2-catalog') # type: logging._loggerClass
         logging.basicConfig()
@@ -46,9 +46,16 @@ class TsV2CatalogBackporter():
         if self.prefix and not self.prefix.endswith('-'):
             self.prefix = f'{self.prefix}-'
 
+        self.debug = debug
+        if prefix == 'dev-':
+            self.debug = True
+
         # get logging level
-        if not log_level and self.prefix:
-            log_level = 'debug'
+        if not log_level:
+            if debug:
+                log_level = 'debug'
+            else:
+                log_level = 'info'
         if log_level:
             self.__set_logging_level(log_level)
 
@@ -76,7 +83,8 @@ class TsV2CatalogBackporter():
         self.get_url = get_url
         self.download_file = download_file
         self.url_exists = url_exists
-        self.temp_dir = tempfile.mkdtemp('', 'ts-v2', None)
+        self.temp_dir = tempfile.mkdtemp('', 'ts-v2-', None)
+        self.logger.debug("TEMP DIR IS {}".format(self.temp_dir))
 
     def __set_logging_level(self, level):
         """
@@ -147,11 +155,10 @@ class TsV2CatalogBackporter():
             self.reporter.commit()
 
     def __del__(self):
-        if self.temp_dir and os.path.exists(self.temp_dir):
-            try:
-                shutil.rmtree(self.temp_dir)
-            finally:
-                pass
+        if self.debug:
+            print("Leaving temp directory on disk for debugging: ", self.temp_dir)
+        elif self.temp_dir and os.path.exists(self.temp_dir):
+            remove_tree(self.temp_dir, ignore_errors=True)
 
     def _run(self):
         """
@@ -159,7 +166,6 @@ class TsV2CatalogBackporter():
         :return:
         """
         try:
-            self.logger.debug('Temp directory {} contents {}'.format('/tmp', get_subdirs('/tmp/')))
             return self.__execute()
         except Exception as e:
             self.report_error(str(e))
@@ -206,9 +212,10 @@ class TsV2CatalogBackporter():
 
                 rc_format = None
 
-                self.logger.debug('Temp directory {} contents {}'.format(self.temp_dir, get_subdirs(self.temp_dir)))
+                # self.logger.debug('Temp directory {} contents {}'.format(self.temp_dir, get_subdirs(self.temp_dir)))
                 res_temp_dir = os.path.join(self.temp_dir, lid, rid)
-                os.makedirs(res_temp_dir)
+                if not os.path.isdir(res_temp_dir):
+                    os.makedirs(res_temp_dir)
 
                 if 'formats' in res:
                     for format in res['formats']:
@@ -339,10 +346,6 @@ class TsV2CatalogBackporter():
                             'rc_type': rc_type
                         })
 
-                # cleanup resource directory
-                remove_tree(res_temp_dir)
-            # cleanup language directory
-            remove_tree(os.path.join(self.temp_dir, lid))
         # inject supplementary resources
         for s in supplemental_resources:
             self._add_supplement(cat_dict, s['language'], s['resource'], s['project'], s['modified'], s['rc_type'])
@@ -444,7 +447,6 @@ class TsV2CatalogBackporter():
         cache_key = '{0}--{1}'.format(pid, lid)
         if cache_key in self.ts_resource_cache:
             ts_resources = self.ts_resource_cache[cache_key]
-            self.logger.debug(ts_resources)
             self.logger.debug(f"{cache_key} found in cache!")
         else:
             ts_resource_url = '{}/v2/ts/{}/{}/resources.json'.format(self.cdn_url, pid, lid)
@@ -679,7 +681,7 @@ class TsV2CatalogBackporter():
 
             # verify project file exists
             note_file = os.path.normpath(os.path.join(rc_dir, project_path))
-            if not os.path.exists(note_file):
+            if not os.path.isfile(note_file):
                 raise Exception('Could not find translationNotes file at {}'.format(note_file))
 
             # collect chunk data
@@ -702,11 +704,6 @@ class TsV2CatalogBackporter():
                 note_json.append({'date_modified': dc['modified'].replace('-', '')})
                 note_upload = prep_data_upload('{}/{}/notes.json'.format(pid, lid), note_json, temp_dir)
                 tn_uploads[tn_key] = note_upload
-
-        try:
-            remove_tree(rc_dir, True)
-        except:
-            pass
 
         return tn_uploads
 
@@ -762,7 +759,7 @@ class TsV2CatalogBackporter():
 
             note_dir = os.path.normpath(os.path.join(rc_dir, project_path))
             note_json = []
-            if not os.path.exists(note_dir):
+            if not os.path.isdir(note_dir):
                 raise Exception('Could not find translationNotes directory at {}'.format(note_dir))
             chapters = os.listdir(note_dir)
 
@@ -866,11 +863,6 @@ class TsV2CatalogBackporter():
                 note_upload = prep_data_upload('{}/{}/notes.json'.format(pid, lid), note_json, temp_dir)
                 tn_uploads[tn_key] = note_upload
 
-        try:
-            remove_tree(rc_dir, True)
-        except:
-            pass
-
         return tn_uploads
 
     def _index_question_files(self, lid, rid, resource, format, process_id, temp_dir):
@@ -952,11 +944,6 @@ class TsV2CatalogBackporter():
                     question_json.append({'date_modified': dc['modified'].replace('-', '')})
                     upload = prep_data_upload('{}/{}/questions.json'.format(pid, lid), question_json, temp_dir)
                     tq_uploads[tq_key] = upload
-
-            try:
-                remove_tree(rc_dir, True)
-            except:
-                pass
         return tq_uploads
 
     def _index_words_files(self, lid, rid, resource, format, process_id, temp_dir):
@@ -1081,11 +1068,6 @@ class TsV2CatalogBackporter():
                             'term': title.strip()
                         })
 
-            try:
-                remove_tree(rc_dir, True)
-            except:
-                pass
-
             if words:
                 words.append({
                     'date_modified': words_date_modified
@@ -1143,7 +1125,7 @@ class TsV2CatalogBackporter():
 
                     # copy usfm project file
                     usfm_dir = os.path.join(temp_dir, '{}_usfm'.format(process_id))
-                    if not os.path.exists(usfm_dir):
+                    if not os.path.isdir(usfm_dir):
                         os.makedirs(usfm_dir)
                     usfm_dest_file = os.path.normpath(os.path.join(usfm_dir, project_path))
                     usfm_src_file = os.path.normpath(os.path.join(rc_dir, project_path))
@@ -1169,11 +1151,6 @@ class TsV2CatalogBackporter():
 
                     self.status['processed'][process_id] = []
                     self._set_status()
-            # clean up download
-            try:
-                remove_tree(rc_dir, True)
-            except:
-                pass
 
     def _upload_all(self, uploads):
         """

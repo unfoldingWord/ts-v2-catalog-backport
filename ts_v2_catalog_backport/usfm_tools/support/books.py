@@ -378,16 +378,17 @@ def loadBooks(path):
 
         # noinspection PyBroadException
         try:
-            f = open(full_file_name, 'U')  # U handles line endings
-            usfm = f.read().decode('utf-8-sig').lstrip()
+            f = open(full_file_name, 'U', encoding='utf-8-sig')  # U handles line endings
+            usfm = f.read().lstrip()
             if usfm[:4] == r'\id ' and usfm[4:7] in silNames:
                 # print '     Loaded ' + fname + ' as ' + usfm[4:7]
                 loaded_books[bookID(usfm)] = usfm
                 f.close()
             else:
                 __logger.info('Ignored ' + fname)
-        except:
+        except Exception as e:
             __logger.warning("Couldn't open " + fname)
+            __logger.warning(e)
     __logger.info('FINISHED LOADING\n')
     return loaded_books
 
