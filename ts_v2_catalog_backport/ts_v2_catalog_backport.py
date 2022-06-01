@@ -214,7 +214,8 @@ class TsV2CatalogBackporter():
 
                 # self.logger.debug('Temp directory {} contents {}'.format(self.temp_dir, get_subdirs(self.temp_dir)))
                 res_temp_dir = os.path.join(self.temp_dir, lid, rid)
-                os.makedirs(res_temp_dir)
+                if not os.path.isdir(res_temp_dir):
+                    os.makedirs(res_temp_dir)
 
                 if 'formats' in res:
                     for format in res['formats']:
@@ -681,7 +682,7 @@ class TsV2CatalogBackporter():
 
             # verify project file exists
             note_file = os.path.normpath(os.path.join(rc_dir, project_path))
-            if not os.path.exists(note_file):
+            if not os.path.isfile(note_file):
                 raise Exception('Could not find translationNotes file at {}'.format(note_file))
 
             # collect chunk data
@@ -759,7 +760,7 @@ class TsV2CatalogBackporter():
 
             note_dir = os.path.normpath(os.path.join(rc_dir, project_path))
             note_json = []
-            if not os.path.exists(note_dir):
+            if not os.path.isdir(note_dir):
                 raise Exception('Could not find translationNotes directory at {}'.format(note_dir))
             chapters = os.listdir(note_dir)
 
@@ -1125,7 +1126,7 @@ class TsV2CatalogBackporter():
 
                     # copy usfm project file
                     usfm_dir = os.path.join(temp_dir, '{}_usfm'.format(process_id))
-                    if not os.path.exists(usfm_dir):
+                    if not os.path.isdir(usfm_dir):
                         os.makedirs(usfm_dir)
                     usfm_dest_file = os.path.normpath(os.path.join(usfm_dir, project_path))
                     usfm_src_file = os.path.normpath(os.path.join(rc_dir, project_path))
