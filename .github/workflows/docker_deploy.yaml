@@ -49,7 +49,7 @@ jobs:
           echo "steps.vars.outputs.docker_tags:" ${{ steps.vars.outputs.docker_tags }}
 
       - name: Publish Docker Github Action
-        uses: elgohr/Publish-Docker-Github-Action@master
+        uses: elgohr/Publish-Docker-Github-Action@v5
         with:
           workdir: .
           name: unfoldingword/ts_v2_catalog_backport
